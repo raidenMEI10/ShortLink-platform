@@ -4,14 +4,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.nageoffer.shortlink.admin.common.serialize.PhoneDesensitizationSerializer;
 import lombok.Data;
 
-import java.util.Date;
-
-/**
- * 用户返回参数实体
- */
 @Data
-public class UserRespDTO {
-
+public class UserActualRespDTO {
     /**
      * ID
      */
@@ -31,12 +25,10 @@ public class UserRespDTO {
     /**
      * 手机号
      */
-    @JsonSerialize(using = PhoneDesensitizationSerializer.class) // 手机号脱敏序列化（序列化传给前端之前脱敏）
     private String phone;
 
     /**
      * 邮箱
      */
     private String mail;
-
 }
