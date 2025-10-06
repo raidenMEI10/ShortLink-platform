@@ -7,6 +7,12 @@ import org.springframework.stereotype.Service;
 /**
  * 短连接分组服务接口
  */
-@Service
+
 public interface GroupService extends IService<GroupDO> {
+
+    /**
+     * 新增短连接分组名
+     * @param groupName
+     */
+    void saveGroup(String groupName);
 }
