@@ -1,6 +1,7 @@
 package com.nageoffer.shortlink.admin.dao.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.nageoffer.shortlink.admin.common.database.BaseDO;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -13,7 +14,7 @@ import java.util.Date;
  */
 @Data
 @TableName("t_user")
-public class UserDO implements Serializable {
+public class UserDO extends BaseDO implements Serializable {
 
     @TableId(type = IdType.AUTO)
     /**
@@ -51,23 +52,6 @@ public class UserDO implements Serializable {
      */
     private Long deletionTime;
 
-    /**
-     * 创建时间
-     * 通过注解实现mybatisplus自动填充
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Date createTime;
 
-    /**
-     * 修改时间
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 删除标识 0：未删除 1：已删除
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private Integer delFlag;
 
 }
