@@ -20,6 +20,6 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
 
     @Override
     public void updateFill(MetaObject metaObject) {
-        this.strictInsertFill(metaObject, "createTime", LocalDateTime::now, LocalDateTime.class); //参数分别为源对象，字段名，获取值的方法，字段类型
+        this.strictInsertFill(metaObject, "UpdateTime", Date::new, Date.class); //参数分别为源对象，字段名，获取值的方法，字段类型
     }
 }
