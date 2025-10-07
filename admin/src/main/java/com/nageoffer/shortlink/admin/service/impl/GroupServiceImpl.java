@@ -26,6 +26,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         GroupDO groupDO = GroupDO.builder()
                 .gid(gid)
                 .name(groupName)
+                .sortOrder(0)
                 .build();
         baseMapper.insert(groupDO);
     }
@@ -35,6 +36,6 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class).eq(GroupDO::getGid, gid)
                 .eq(GroupDO::getUsername, null);// TODO 设置用户名
         GroupDO hasGroupFlag = baseMapper.selectOne(queryWrapper);
-        return hasGroupFlag != null;
+        return hasGroupFlag == null;
     }
 }
