@@ -11,6 +11,7 @@ import java.util.Date;
  */
 @Data
 public class BaseDO {
+
     /**
      * 创建时间
      * 通过注解实现mybatisplus自动填充
