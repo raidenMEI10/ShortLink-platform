@@ -2,8 +2,8 @@ package com.nageoffer.shortlink.admin.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.nageoffer.shortlink.admin.dao.entity.GroupDO;
+import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupUpdateReqDTO;
 import com.nageoffer.shortlink.admin.dto.resp.ShortLinkGroupRespDTO;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -24,4 +24,16 @@ public interface GroupService extends IService<GroupDO> {
      * @return
      */
     List<ShortLinkGroupRespDTO> listGroup();
+
+    /**
+     * 修改短连接分组
+     * @param requestParam
+     */
+    void updateGroup(ShortLinkGroupUpdateReqDTO requestParam);
+
+    /**
+     * 删除短连接分组
+     * @param gid
+     */
+    void deleteGroup(String gid);
 }
