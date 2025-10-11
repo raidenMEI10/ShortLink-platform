@@ -1,2 +1,25 @@
 server:
   port: 8001
+spring:
+  datasource:
+    # ShardingSphere 对 Driver 自定义，实现分库分表等隐藏逻辑
+    # ShardingSphere 配置文件路径
+    url: jdbc:mysql://127.0.0.1:3306/link?characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&serverTimezone=GMT%2B8
+    username: root
+    password: 123456
+
+      #    数据库连接池配置
+    hikari:
+      connection-test-query: select 1
+      connection-timeout: 20000
+      idle-timeout: 300000
+      maximum-pool-size: 5
+      minimum-idle: 5
+
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 123456
+      connect-timeout: 1000
