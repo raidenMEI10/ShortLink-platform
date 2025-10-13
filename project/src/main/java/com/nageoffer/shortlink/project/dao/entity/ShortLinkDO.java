@@ -15,9 +15,9 @@ import java.util.Date;
  */
 @Data
 @Builder
+@TableName("t_link")
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("t_link")
 public class ShortLinkDO extends BaseDO {
     /**
      * ID
@@ -80,6 +80,7 @@ public class ShortLinkDO extends BaseDO {
     @TableField("`describe`")
     private String describe;
 
-
+    //网站标识
+    private String favicon;
 
 }

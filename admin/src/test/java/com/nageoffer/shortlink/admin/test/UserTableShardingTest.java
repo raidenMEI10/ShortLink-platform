@@ -9,7 +9,7 @@ public class UserTableShardingTest {
             "  `origin_url` varchar(1024) DEFAULT NULL COMMENT '完成原始链接',\n" +
             "  `click_number` int(11) DEFAULT '0' COMMENT '点击量',\n" +
             "  `gid` varchar(32) DEFAULT NULL COMMENT '分组标识',\n" +
-            "  `enable_status` tinyint(1) DEFAULT NULL COMMENT '是否启用标识，0是启用，1是未启用',\n" +
+            "  `favicon` varchar(256) DEFAULT NULL COMMENT '网站图标',\n" +
             "  `create_type` tinyint(1) DEFAULT NULL COMMENT '创建类型：0为接口创建，1为控制台创建',\n" +
             "  `valid_date_type` tinyint(1) DEFAULT NULL COMMENT '有效期类型，0为永久有效，1为自定义',\n" +
             "  `valid_date` datetime DEFAULT NULL COMMENT '有效期',\n" +
@@ -17,6 +17,7 @@ public class UserTableShardingTest {
             "  `create_time` datetime DEFAULT NULL COMMENT '创建时间',\n" +
             "  `update_time` datetime DEFAULT NULL COMMENT '更新时间',\n" +
             "  `del_flag` tinyint(1) DEFAULT NULL COMMENT '删除标识',\n" +
+            "  `enable_status` tinyint(1) DEFAULT NULL COMMENT '是否启用标识，0是启用，1是未启用',\n" +
             "  PRIMARY KEY (`id`),\n" +
             "  UNIQUE KEY `t_link_id_uindex` (`id`),\n" +
             "  UNIQUE KEY `idx_unique_for_short-url` (`full_short_url`)\n" +
