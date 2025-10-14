@@ -13,7 +13,6 @@ import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupSortReqDTO;
 import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupUpdateReqDTO;
 import com.nageoffer.shortlink.admin.dto.resp.ShortLinkGroupRespDTO;
 import com.nageoffer.shortlink.admin.remote.ShortLinkRemoteService;
-import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.admin.service.GroupService;
 import com.nageoffer.shortlink.admin.toolkit.RandomGenerator;
@@ -33,14 +32,19 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
     };
     @Override
     public void saveGroup(String groupName) {
+        saveGroup(groupName, UserContext.getUsername());
+    }
+
+    @Override
+    public void saveGroup(String groupName, String username) {
         String gid;
         do {
             gid = RandomGenerator.generateRandom();
-        } while (!hasGid(gid));
+        } while (!hasGid(username,gid));
         GroupDO groupDO = GroupDO.builder()
                 .gid(gid)
                 .name(groupName)
-                .username(UserContext.getUsername())
+                .username(username)
                 .sortOrder(0)
                 .build();
         baseMapper.insert(groupDO);
@@ -102,9 +106,9 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         });
     }
 
-    private Boolean hasGid(String gid){
+    private Boolean hasGid(String username,  String gid){
         LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class).eq(GroupDO::getGid, gid)
-                .eq(GroupDO::getUsername, UserContext.getUsername());
+                .eq(GroupDO::getUsername, Optional.ofNullable(username).orElse(UserContext.getUsername()));
         GroupDO hasGroupFlag = baseMapper.selectOne(queryWrapper);
         return hasGroupFlag == null;
     }
