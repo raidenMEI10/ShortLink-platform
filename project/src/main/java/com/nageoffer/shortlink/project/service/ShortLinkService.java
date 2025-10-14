@@ -6,7 +6,10 @@ import com.nageoffer.shortlink.project.dao.entity.ShortLinkDO;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkPageReqDTO;
 import com.nageoffer.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
+import com.nageoffer.shortlink.project.dto.resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.project.dto.resp.ShortLinkPageRespDTO;
+
+import java.util.List;
 
 /**
  * 短链接接口层
@@ -26,4 +29,10 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
      * @return 短链接分页返回结果
      */
     IPage<ShortLinkPageRespDTO> pageShortLink(ShortLinkPageReqDTO requestParam);
+
+    /**
+     * 查询所有短连接分组以及每个分组内的数量
+     * @return
+     */
+    List<ShortLinkGroupCountQueryRespDTO> listShortLinkGroupCount(List<String> requestParam);
 }
