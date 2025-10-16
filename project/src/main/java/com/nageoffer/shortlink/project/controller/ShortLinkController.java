@@ -35,7 +35,7 @@ public class ShortLinkController {
      * @param requestParam
      * @return
      */
-    @PutMapping("/api/shot-link/v1/update")
+    @PostMapping("/api/shot-link/v1/update")
     public Result<Void> updateShortLink(@RequestBody ShortLinkUpdateReqDTO requestParam) {
         shortLinkService.updateShortLink(requestParam);
         return Results.success();
