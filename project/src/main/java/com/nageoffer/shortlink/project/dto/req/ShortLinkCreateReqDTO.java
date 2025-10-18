@@ -13,6 +13,10 @@ import java.util.Date;
 public class ShortLinkCreateReqDTO {
 
     /**
+     * 域名协议
+     */
+    private String domainProtocal;
+    /**
      * 域名
      */
     private String domain;
