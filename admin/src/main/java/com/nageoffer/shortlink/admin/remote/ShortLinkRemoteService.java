@@ -5,6 +5,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
+import com.nageoffer.shortlink.admin.dto.req.RecycleBinSaveReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.req.ShortLinkUpdateReqDTO;
@@ -33,7 +34,7 @@ public interface ShortLinkRemoteService {
         requestMap.put("gid",requestParam.getGid());
         requestMap.put("current",requestParam.getCurrent());
         requestMap.put("size",requestParam.getSize());
-        String resultPageStr = HttpUtil.get("http://127.0.0.1:8001/api/shot-link/v1/page", requestMap);
+        String resultPageStr = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/page", requestMap);
 
         return JSON.parseObject(resultPageStr, new TypeReference<>() {
         });
@@ -46,7 +47,7 @@ public interface ShortLinkRemoteService {
      * @return
      */
     default Result<ShortLinkCreateRespDTO> createShortLink(ShortLinkCreateReqDTO requestParam){
-        String resultBodyStr = HttpUtil.post("http://127.0.0.1:8001/api/shot-link/v1/create", JSON.toJSONString(requestParam));
+        String resultBodyStr = HttpUtil.post("http://127.0.0.1:8001/api/short-link/v1/create", JSON.toJSONString(requestParam));
         //通过TypeReference告诉fastjson反序列化时的DTO中泛型成员变量的具体类型
         return JSON.parseObject(resultBodyStr, new TypeReference<Result<ShortLinkCreateRespDTO>>() {
         });
@@ -60,7 +61,7 @@ public interface ShortLinkRemoteService {
     default Result<List<ShortLinkGroupCountQueryRespDTO>> listShortLinkGroupCount(List<String> requestParam) {
         Map<String ,Object> requestMap = new HashMap<>();
         requestMap.put("requestParam",requestParam);
-        String resultPageStr = HttpUtil.get("http://127.0.0.1:8001/api/shot-link/v1/count", requestMap);
+        String resultPageStr = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/count", requestMap);
 
         return JSON.parseObject(resultPageStr, new TypeReference<>() {
         });
@@ -71,7 +72,7 @@ public interface ShortLinkRemoteService {
      * @param requestParam
      */
     default void updateShortLink(ShortLinkUpdateReqDTO requestParam){
-        HttpUtil.post("http://127.0.0.1:8001/api/shot-link/v1/update", JSON.toJSONString(requestParam));
+        HttpUtil.post("http://127.0.0.1:8001/api/short-link/v1/update", JSON.toJSONString(requestParam));
     }
 
     /**
@@ -83,6 +84,30 @@ public interface ShortLinkRemoteService {
     default Result<String> getTitleByUrl(@RequestParam("url") String url) throws IOException{
         String resultStr = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/title?url=" + url);
         return JSON.parseObject(resultStr, new TypeReference<>() {
+        });
+    }
+
+    /**
+     * 保存短链接至回收站
+     * @param requestParam
+     */
+    default void saveRecycleBin( RecycleBinSaveReqDTO requestParam) {
+        HttpUtil.post("http://127.0.0.1:8001/api/shot-link/v1/recycle-bin/save", JSON.toJSONString(requestParam));
+    }
+
+    /**
+     * 分页查询回收站
+     * @param requestParam
+     * @return
+     */
+    default Result<IPage<ShortLinkPageRespDTO>> pageRecycleBinShortLink(ShortLinkPageReqDTO requestParam) {
+        Map<String ,Object> requestMap = new HashMap<>();
+        requestMap.put("gid",requestParam.getGid());
+        requestMap.put("current",requestParam.getCurrent());
+        requestMap.put("size",requestParam.getSize());
+        String resultPageStr = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/recycle-bin/page", requestMap);
+
+        return JSON.parseObject(resultPageStr, new TypeReference<>() {
         });
     }
 }

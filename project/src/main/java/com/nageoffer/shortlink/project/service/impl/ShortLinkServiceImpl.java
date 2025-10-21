@@ -30,7 +30,11 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import jodd.util.StringUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -40,6 +44,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +82,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .shortUri(shortLinkSuffix)
                 .enableStatus(0)
                 .fullShortUrl(fullShortUrl)
+                .favicon(getFavicon(requestParam.getOriginUrl()))
                 .build();
         ShortLinkGotoDO linkGotoDO = ShortLinkGotoDO.builder()
                 .fullShortUrl(fullShortUrl)
@@ -106,7 +113,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateShortLink(ShortLinkUpdateReqDTO requestParam) {
+    public void updateShortLink(ShortLinkUpdateReqDTO requestParam) throws IOException {
         LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
                 .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
                 .eq(ShortLinkDO::getGid, requestParam.getGid())
@@ -232,17 +239,17 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                     .eq(ShortLinkDO::getDelFlag, 0)
                     .eq(ShortLinkDO::getEnableStatus, 0);
             ShortLinkDO hasShortLinkDo = baseMapper.selectOne(queryWrapper);
-            if(hasShortLinkDo != null){
-                if(hasShortLinkDo.getValidDate() != null && hasShortLinkDo.getValidDate().before(new Date())){
-                    //设置一个空值防止缓存穿透
-                    stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl), "-", 30 , TimeUnit.MINUTES);
-                    ((HttpServletResponse) response).sendRedirect("/page/notfound");
-                    return;
-                }
-                stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl), hasShortLinkDo.getOriginUrl(),
-                        LinkUtil.getLinkCacheValidTime(hasShortLinkDo.getValidDate()), TimeUnit.MILLISECONDS);
-                ((HttpServletResponse) response).sendRedirect(hasShortLinkDo.getOriginUrl());
-            }}finally {
+            if(hasShortLinkDo != null || (hasShortLinkDo.getValidDate() != null && hasShortLinkDo.getValidDate().before(new Date()))) {
+                //设置一个空值防止缓存穿透
+                stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl), "-", 30, TimeUnit.MINUTES);
+                ((HttpServletResponse) response).sendRedirect("/page/notfound");
+                return;
+
+            }
+            stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl), hasShortLinkDo.getOriginUrl(),
+                    LinkUtil.getLinkCacheValidTime(hasShortLinkDo.getValidDate()), TimeUnit.MILLISECONDS);
+            ((HttpServletResponse) response).sendRedirect(hasShortLinkDo.getOriginUrl());
+        }finally {
                 lock.unlock();
             }
     }
@@ -263,5 +270,50 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             customGenerateCount++;
         }
         return shortUri;
+    }
+
+    /**
+     * 获取网站的favicon图标链接
+     * @param url 网站的URL
+     * @return favicon图标链接，如果不存在则返回nulL
+     */
+    @SneakyThrows
+    private String getFavicon(String url) {
+        //创建URL对象
+        URL targetUrl = new URL(url);
+        //打开连接
+        HttpURLConnection connection = (HttpURLConnection) targetUrl.openConnection();
+        // 禁止自动处理重定向
+        connection.setInstanceFollowRedirects(false);
+        // 设置请求方法为GET
+        connection.setRequestMethod("GET");
+        //连接
+        connection.connect();
+        //获取响应码
+        int responseCode = connection.getResponseCode();
+        // 如果是重定向响应码
+        if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
+            //获取重定向的URL
+            String redirectUrl = connection.getHeaderField("Location");
+            //如果重定向URL不为空
+            if (redirectUrl != null) {
+                // 创建新的URL对象
+                URL newUrl = new URL(redirectUrl);//打开新的连接
+                connection = (HttpURLConnection) newUrl.openConnection();//设置请求方法为GET
+                connection.setRequestMethod("GET");//连接
+                connection.connect();//获取新的响应码
+                responseCode = connection.getResponseCode();
+            }
+        }
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            //使用Jsoup解析HTML文档
+            Document document = Jsoup.connect(url).get();
+            //选择第一个匹配的link标签
+            Element faviconLink = document.select("link[rel~=(?i)^(shortcut )?icon]").first();
+            if (faviconLink != null) {
+                return faviconLink.attr("abs:href");
+            }
+        }
+        return null;
     }
 }

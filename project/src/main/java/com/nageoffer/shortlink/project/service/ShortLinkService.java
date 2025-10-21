@@ -30,7 +30,7 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
      * 更新短链接
      * @param requestParam
      */
-    void updateShortLink(ShortLinkUpdateReqDTO requestParam);
+    void updateShortLink(ShortLinkUpdateReqDTO requestParam) throws IOException;
 
     /**
      * 分页查询短链接
