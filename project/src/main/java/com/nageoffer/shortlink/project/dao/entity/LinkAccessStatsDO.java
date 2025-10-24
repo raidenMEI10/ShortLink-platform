@@ -68,7 +68,7 @@ public class LinkAccessStatsDO extends BaseDO {
     /**
      * 创建时间
      */
-    
+
 //    private LocalDateTime createTime;
     private Date createTime;
 
