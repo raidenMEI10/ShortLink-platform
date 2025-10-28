@@ -59,7 +59,7 @@
         </dependency>
     </dependencies>
 
-    //新增项目打包插件
+<!--    //新增项目打包插件-->
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
