@@ -337,14 +337,18 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             JSONObject localeResultObject = JSON.parseObject(localeResultStr);
             String infocode = localeResultObject.getString("infocode");
             LinkLocaleStatsDO linkLocaleStatsDO = null;
+
+            String actualProvince;
+            String actualCity ;
+
             if(StrUtil.isNotBlank(infocode) && StrUtil.equals(infocode,"10000")){
                 String province = localeResultObject.getString("province");
                 boolean unkownFlag = StrUtil.equals(province,"[]");
 
                 linkLocaleStatsDO = LinkLocaleStatsDO.builder()
                         .fullShortUrl(fullShortUrl)
-                        .province(unkownFlag ? "未知": province)
-                        .city(unkownFlag ? "未知": localeResultObject.getString("city"))
+                        .province(actualProvince = unkownFlag ? "未知": province)
+                        .city(actualCity = unkownFlag ? "未知": localeResultObject.getString("city"))
                         .adcode(unkownFlag ? "未知": localeResultObject.getString("adcode"))
                         .cnt(1)
                         .country("中国")
@@ -372,17 +376,10 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                         .build();
                 linkBrowserStatsMapper.shortLinkBrowserState(linkBrowserStatsDO); //记录浏览器访问统计数据
 
-                LinkAccessLogsDO linkAccessLogsDO = LinkAccessLogsDO.builder()
-                        .ip(remoteAddr)
-                        .browser(browser)
-                        .os(os)
-                        .gid(gid)
-                        .fullShortUrl(fullShortUrl)
-                        .user(uv.get())  //这里的user存的是用户唯一标识
-                        .build();
-                linkAccessLogsMapper.insert(linkAccessLogsDO); //记录访问日志
+
+                String device = LinkUtil.getDevice(((HttpServletRequest) request));
                 LinkDeviceStatsDO linkDeviceStatsDO = LinkDeviceStatsDO.builder()
-                        .device(LinkUtil.getDevice(((HttpServletRequest) request)))
+                        .device(device)
                         .cnt(1)
                         .gid(gid)
                         .fullShortUrl(fullShortUrl)
@@ -390,14 +387,27 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                         .build();
                 linkDeviceStatsMapper.shortLinkDeviceState(linkDeviceStatsDO); // 记录设备访问统计数据
 
+                String network = LinkUtil.getNetwork(((HttpServletRequest) request));
                 LinkNetworkStatsDO linkNetworkStatsDO = LinkNetworkStatsDO.builder()
-                        .network(LinkUtil.getNetwork(((HttpServletRequest) request)))
+                        .network(network)
                         .cnt(1)
                         .gid(gid)
                         .fullShortUrl(fullShortUrl)
                         .date(new Date())
                         .build();
                 linkNetworkStatsMapper.shortLinkNetworkState(linkNetworkStatsDO);
+                LinkAccessLogsDO linkAccessLogsDO = LinkAccessLogsDO.builder()
+                        .ip(remoteAddr)
+                        .browser(browser)
+                        .os(os)
+                        .device(device)
+                        .network(network)
+                        .gid(gid)
+                        .locale(StrUtil.join("-","中国",actualProvince, actualCity) )
+                        .fullShortUrl(fullShortUrl)
+                        .user(uv.get())  //这里的user存的是用户唯一标识
+                        .build();
+                linkAccessLogsMapper.insert(linkAccessLogsDO); //记录访问日志
 
             }
         }catch (Throwable ex){
