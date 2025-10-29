@@ -1,6 +1,9 @@
 package com.nageoffer.shortlink.project.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.nageoffer.shortlink.project.dto.req.ShortLinkAccessRecordReqDTO;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkStatsReqDTO;
+import com.nageoffer.shortlink.project.dto.resp.ShortLinkAccessRecordRespDTO;
 import com.nageoffer.shortlink.project.dto.resp.ShortLinkStatsRespDTO;
 
 public interface ShortLinkStatsService {
@@ -11,4 +14,11 @@ public interface ShortLinkStatsService {
      * @return 短链接监控数据
      */
     ShortLinkStatsRespDTO oneShortLinkStats(ShortLinkStatsReqDTO requestParam);
+
+    /**
+     * 获取单个短链接指定时间内访问记录监控数据
+     * @param requestParam
+     * @return
+     */
+    IPage<ShortLinkAccessRecordRespDTO> oneShortLinkStatsAccessRecord(ShortLinkAccessRecordReqDTO requestParam);
 }
