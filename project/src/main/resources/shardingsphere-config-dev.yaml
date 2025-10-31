@@ -42,7 +42,7 @@ rules:
           # 用于单分片键的标准分片场景
           standard:
             # 分片键
-            shardingColumn: username
+            shardingColumn: gid
             # 分片算法，对应 rules[0].shardingAlgorithms
             shardingAlgorithmName: link_stats_today_hash_mod
     # 分片算法
