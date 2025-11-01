@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.shortlink.project.dao.entity.*;
 import com.nageoffer.shortlink.project.dao.mapper.*;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkAccessRecordReqDTO;
+import com.nageoffer.shortlink.project.dto.req.ShortLinkGroupAccessRecordReqDTO;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 import com.nageoffer.shortlink.project.dto.resp.*;
@@ -439,5 +440,39 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
                 .deviceStats(deviceStats)
                 .networkStats(networkStats)
                 .build();
+    }
+
+    @Override
+    public IPage<ShortLinkAccessRecordRespDTO> groupShortLinkStatsAcessRecord(ShortLinkGroupAccessRecordReqDTO requestParam) {
+        LambdaQueryWrapper<LinkAccessLogsDO> queryWrapper = Wrappers.lambdaQuery(LinkAccessLogsDO.class)
+                .eq(LinkAccessLogsDO::getGid, requestParam.getGid())
+                .between(LinkAccessLogsDO::getCreateTime, requestParam.getStartDate(), requestParam.getEndDate())
+                .eq(LinkAccessLogsDO::getDelFlag, 0)
+                .orderByDesc(LinkAccessLogsDO::getCreateTime);
+        IPage<LinkAccessLogsDO> linkAccessLogsDOIPage = linkAccessLogsMapper.selectPage(requestParam, queryWrapper);
+        IPage<ShortLinkAccessRecordRespDTO> actualResult = linkAccessLogsDOIPage.convert(each -> BeanUtil.toBean(each,ShortLinkAccessRecordRespDTO.class) );
+        List<String> userAccessLogList = actualResult.getRecords()
+                .stream()
+                .map(ShortLinkAccessRecordRespDTO::getUser)
+                .toList();
+        // 获取新旧访问类型
+        List<Map<String,Object>> uvTypeList =  linkAccessLogsMapper.selectGroupUvTypeByUsers(
+                requestParam.getGid(),
+                requestParam.getStartDate(),
+                requestParam.getEndDate(),
+                userAccessLogList);
+        actualResult.getRecords().stream().forEach(each ->{
+                    String uvType = uvTypeList.stream()
+                            .filter(item -> Objects.equals(each.getUser(),item.get("user")))
+                            .findFirst()
+                            .map(item -> item.get("uvType"))
+                            .map(Object::toString)
+                            .orElse("旧访客");
+                    each.setUvType(uvType);
+                }
+
+        );
+
+        return actualResult;
     }
 }

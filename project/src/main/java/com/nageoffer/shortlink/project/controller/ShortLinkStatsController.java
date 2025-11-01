@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.common.convention.result.Results;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkAccessRecordReqDTO;
+import com.nageoffer.shortlink.project.dto.req.ShortLinkGroupAccessRecordReqDTO;
+import com.nageoffer.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 import com.nageoffer.shortlink.project.dto.resp.ShortLinkAccessRecordRespDTO;
 import com.nageoffer.shortlink.project.dto.resp.ShortLinkStatsRespDTO;
@@ -11,7 +13,6 @@ import com.nageoffer.shortlink.project.service.ShortLinkStatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.nageoffer.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,5 +44,12 @@ public class ShortLinkStatsController {
         return Results.success(shortLinkStatsService.oneShortLinkStatsAccessRecord(requestParam));
     }
 
+    /**
+     * 访问分组短链接指定时间内访问记录（日志）监控数据
+     */
+    @GetMapping("/api/short-link/v1/access-record/group")
+    public Result<IPage<ShortLinkAccessRecordRespDTO>> groupShortLinkStatsAcessRecord(ShortLinkGroupAccessRecordReqDTO requestParam) {
+        return Results.success(shortLinkStatsService.groupShortLinkStatsAcessRecord(requestParam));
+    }
 
 }
