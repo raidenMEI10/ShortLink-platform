@@ -184,6 +184,19 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 shortLinkDO.setGid(requestParam.getGid());
                 baseMapper.insert(shortLinkDO);
             }
+            if(!Objects.equals(hasShortLinkDo.getValidDateType(),requestParam.getValidDateType()) ||
+                    !Objects.equals(hasShortLinkDo.getValidDate(),requestParam.getValidDate())){
+                //如果有效期数据不一致，则删除缓存
+                stringRedisTemplate.delete(String.format(String.format(GOTO_SHORT_LINK_KEY, requestParam.getFullShortUrl())));
+                if (hasShortLinkDo.getValidDate() != null && hasShortLinkDo.getValidDate().before(new Date())) {
+
+                    // 当前短链接(更新后)是永久有效或者有效期在当前时间之后
+                    if (Objects.equals(requestParam.getValidDateType(), ValidDateTypeEnum.PERMANENT.getType())
+                            || requestParam.getValidDate().after(new Date())) {
+                        stringRedisTemplate.delete(String.format(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, requestParam.getFullShortUrl())));
+                    }
+                }
+            }
 
         }else{
             throw new ClientException("需要更新的短链接不存在");
