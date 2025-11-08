@@ -87,7 +87,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private String statsLocaleAmapKey;
 
     // 默认创建短链接域名
-    @Value("${short-link.domain.default")
+    @Value("${short-link.domain.default}")
     private String createShortLinkDefaultDomain;
 
     @Override
@@ -173,6 +173,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
                 baseMapper.update(shortLinkDO, updateWrapper);
             }else {
+                // TODO 如果GID不一样，则应该删除原有数据，插入新数据(因为老数据和新数据不在一张表里，不能直接更新)
                 LambdaUpdateWrapper<ShortLinkDO> updateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
                         .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
                         .eq(ShortLinkDO::getGid, hasShortLinkDo.getGid())
@@ -461,7 +462,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             String originUrl = requestParam.getOriginUrl();
             originUrl+=System.currentTimeMillis(); // 防止短时间内生成相同短链接
             shortUri =  HashUtil.hashToBase62(originUrl);
-            if(!shortUriCreateCachePenetrationBloomFilter.contains(requestParam.getDomain() + "/" + shortUri)){
+            if(!shortUriCreateCachePenetrationBloomFilter.contains(createShortLinkDefaultDomain + "/" + shortUri)){
                 break;
             }
             customGenerateCount++;
