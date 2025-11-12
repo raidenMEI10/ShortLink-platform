@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.nageoffer.shortlink.project.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -12,36 +29,17 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * 操作系统访问统计Mapper接口
+ * 操作系统统计访问持久层
+ * 公众号：马丁玩编程，回复：加群，添加马哥微信（备注：link）获取项目资料
  */
 public interface LinkOsStatsMapper extends BaseMapper<LinkOsStatsDO> {
+
     /**
-     * 记录地区访问统计数据
-     * @param
+     * 记录地区访问监控数据
      */
-    @Insert("INSERT INTO\n" +
-            "  t_link_os_stats (\n" +
-            "    full_short_url,\n" +
-            "    gid,\n" +
-            "    date,\n" +
-            "    cnt,\n" +
-            "    os,\n" +
-            "    update_time,"+
-            "    create_time,\n" +
-            "    del_flag\n" +
-            "  )\n" +
-            "VALUES(\n" +
-            "    #{linkOsStats.fullShortUrl},\n" +
-            "    #{linkOsStats.gid},\n" +
-            "    #{linkOsStats.date},\n" +
-            "    #{linkOsStats.cnt},\n" +
-            "    #{linkOsStats.os},"+
-            "    NOW(),\n" +
-            "    NOW(),\n" +
-            "    0 \n" +
-            "  ) ON DUPLICATE KEY\n" +
-            "UPDATE\n" +
-            "  cnt = cnt + #{linkOsStats.cnt};")
+    @Insert("INSERT INTO t_link_os_stats (full_short_url, gid, date, cnt, os, create_time, update_time, del_flag) " +
+            "VALUES( #{linkOsStats.fullShortUrl}, #{linkOsStats.gid}, #{linkOsStats.date}, #{linkOsStats.cnt}, #{linkOsStats.os}, NOW(), NOW(), 0) " +
+            "ON DUPLICATE KEY UPDATE cnt = cnt +  #{linkOsStats.cnt};")
     void shortLinkOsState(@Param("linkOsStats") LinkOsStatsDO linkOsStatsDO);
 
     /**

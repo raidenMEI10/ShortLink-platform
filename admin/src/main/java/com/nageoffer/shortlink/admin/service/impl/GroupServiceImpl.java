@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.nageoffer.shortlink.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
@@ -19,6 +36,7 @@ import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkGroupCountQueryRes
 import com.nageoffer.shortlink.admin.service.GroupService;
 import com.nageoffer.shortlink.admin.toolkit.RandomGenerator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,66 +49,72 @@ import java.util.Optional;
 import static com.nageoffer.shortlink.admin.common.constant.RedisCacheConstant.LOCK_GROUP_CREATE_KEY;
 
 /**
- * 短连接分组服务实现类
+ * 短链接分组接口实现层
+ * 公众号：马丁玩编程，回复：加群，添加马哥微信（备注：link）获取项目资料
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implements GroupService {
+
     private final RedissonClient redissonClient;
 
     @Value("${short-link.group.max-num}")
-    private Integer maxGroupNum;
+    private Integer groupMaxNum;
 
+    /**
+     * 后续重构为 SpringCloud Feign 调用
+     */
     ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
     };
+
     @Override
     public void saveGroup(String groupName) {
-        saveGroup(groupName, UserContext.getUsername());
+        saveGroup(UserContext.getUsername(), groupName);
     }
 
     @Override
-    public void saveGroup(String groupName, String username) {
+    public void saveGroup(String username, String groupName) {
         RLock lock = redissonClient.getLock(String.format(LOCK_GROUP_CREATE_KEY, username));
         lock.lock();
-        try{
-            LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class).eq(GroupDO::getName, groupName)
+        try {
+            LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class)
                     .eq(GroupDO::getUsername, username)
                     .eq(GroupDO::getDelFlag, 0);
-            List<GroupDO>groupDOList = baseMapper.selectList(queryWrapper);
-            if(CollUtil.isNotEmpty(groupDOList) && groupDOList.size() == maxGroupNum){
-                throw new ClientException(String.format("分组已超出最大限制%s个，请删除不常用分组后再创建", maxGroupNum));
+            List<GroupDO> groupDOList = baseMapper.selectList(queryWrapper);
+            if (CollUtil.isNotEmpty(groupDOList) && groupDOList.size() == groupMaxNum) {
+                throw new ClientException(String.format("已超出最大分组数：%d", groupMaxNum));
             }
             String gid;
             do {
                 gid = RandomGenerator.generateRandom();
-            } while (!hasGid(username,gid));
+            } while (!hasGid(username, gid));
             GroupDO groupDO = GroupDO.builder()
                     .gid(gid)
-                    .name(groupName)
-                    .username(username)
                     .sortOrder(0)
+                    .username(username)
+                    .name(groupName)
                     .build();
             baseMapper.insert(groupDO);
-        }finally {
+        } finally {
             lock.unlock();
         }
-
     }
 
     @Override
     public List<ShortLinkGroupRespDTO> listGroup() {
-
         LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class)
-                .eq(GroupDO::getDelFlag,0)
+                .eq(GroupDO::getDelFlag, 0)
                 .eq(GroupDO::getUsername, UserContext.getUsername())
-                .orderByDesc(List.of(GroupDO::getSortOrder, GroupDO::getUpdateTime));
+                .orderByDesc(GroupDO::getSortOrder, GroupDO::getUpdateTime);
         List<GroupDO> groupDOList = baseMapper.selectList(queryWrapper);
         Result<List<ShortLinkGroupCountQueryRespDTO>> listResult = shortLinkRemoteService
-                .listShortLinkGroupCount(groupDOList.stream().map(GroupDO::getGid).toList());
+                .listGroupShortLinkCount(groupDOList.stream().map(GroupDO::getGid).toList());
         List<ShortLinkGroupRespDTO> shortLinkGroupRespDTOList = BeanUtil.copyToList(groupDOList, ShortLinkGroupRespDTO.class);
         shortLinkGroupRespDTOList.forEach(each -> {
             Optional<ShortLinkGroupCountQueryRespDTO> first = listResult.getData().stream()
-                    .filter(item -> Objects.equals(item.getGid(), item.getGid())).findFirst();
+                    .filter(item -> Objects.equals(item.getGid(), each.getGid()))
+                    .findFirst();
             first.ifPresent(item -> each.setShortLinkCount(first.get().getShortLinkCount()));
         });
         return shortLinkGroupRespDTOList;
@@ -121,9 +145,8 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
     @Override
     public void sortGroup(List<ShortLinkGroupSortReqDTO> requestParam) {
         requestParam.forEach(each -> {
-            GroupDO groupDO =  GroupDO.builder()
+            GroupDO groupDO = GroupDO.builder()
                     .sortOrder(each.getSortOrder())
-                    .gid(each.getGid())
                     .build();
             LambdaUpdateWrapper<GroupDO> updateWrapper = Wrappers.lambdaUpdate(GroupDO.class)
                     .eq(GroupDO::getUsername, UserContext.getUsername())
@@ -133,8 +156,9 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         });
     }
 
-    private Boolean hasGid(String username,  String gid){
-        LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class).eq(GroupDO::getGid, gid)
+    private boolean hasGid(String username, String gid) {
+        LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class)
+                .eq(GroupDO::getGid, gid)
                 .eq(GroupDO::getUsername, Optional.ofNullable(username).orElse(UserContext.getUsername()));
         GroupDO hasGroupFlag = baseMapper.selectOne(queryWrapper);
         return hasGroupFlag == null;

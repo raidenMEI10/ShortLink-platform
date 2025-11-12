@@ -15,22 +15,31 @@
  * limitations under the License.
  */
 
-package com.nageoffer.shortlink.admin.remote.dto.req;
+package com.nageoffer.shortlink.project.mq.producer;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.util.Map;
+
+import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.SHORT_LINK_STATS_STREAM_TOPIC_KEY;
 
 /**
- * 回收站短链接分页请求参数
+ * 短链接监控状态保存消息队列生产者
  * 公众号：马丁玩编程，回复：加群，添加马哥微信（备注：link）获取项目资料
  */
-@Data
-public class ShortLinkRecycleBinPageReqDTO extends Page {
+@Component
+@RequiredArgsConstructor
+public class ShortLinkStatsSaveProducer {
+
+    private final StringRedisTemplate stringRedisTemplate;
 
     /**
-     * 分组标识
+     * 发送延迟消费短链接统计
      */
-    private List<String> gidList;
+    public void send(Map<String, String> producerMap) {
+        stringRedisTemplate.opsForStream().add(SHORT_LINK_STATS_STREAM_TOPIC_KEY, producerMap);
+    }
 }

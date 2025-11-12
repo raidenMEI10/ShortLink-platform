@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.nageoffer.shortlink.project.mq.consumer;
 
 import cn.hutool.core.date.DateUtil;
@@ -83,15 +100,14 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
     public void onMessage(MapRecord<String, String, String> message) {
         String stream = message.getStream();
         RecordId id = message.getId();
-        if(!messageQueueIdempotentHandler.isMessageProcessed(id.toString())){ // 已被消费则直接返回
-            // 判断当前消息是否执行完成
-            if(messageQueueIdempotentHandler.isAccomplish(id.toString())){
+        if (!messageQueueIdempotentHandler.isMessageProcessed(id.toString())) {
+            // 判断当前的这个消息流程是否执行完成
+            if (messageQueueIdempotentHandler.isAccomplish(id.toString())) {
                 return;
             }
             throw new ServiceException("消息未完成流程，需要消息队列重试");
-
         }
-        try{
+        try {
             Map<String, String> producerMap = message.getValue();
             String fullShortUrl = producerMap.get("fullShortUrl");
             if (StrUtil.isNotBlank(fullShortUrl)) {
@@ -100,9 +116,10 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
                 actualSaveShortLinkStats(fullShortUrl, gid, statsRecord);
             }
             stringRedisTemplate.opsForStream().delete(Objects.requireNonNull(stream), id.getValue());
-        }catch (Throwable ex){
-            messageQueueIdempotentHandler.delMessageProcessed(id.toString()); // 删除幂等标识，允许重新消费
-            log.error("短链接访问量统计消费异常，stream={}, id={}", stream, id, ex);
+        } catch (Throwable ex) {
+            // 某某某情况宕机了
+            messageQueueIdempotentHandler.delMessageProcessed(id.toString());
+            log.error("记录短链接监控消费异常", ex);
         }
         messageQueueIdempotentHandler.setAccomplish(id.toString());
     }
