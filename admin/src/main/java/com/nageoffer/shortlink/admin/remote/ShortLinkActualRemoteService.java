@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * 短链接实际远程服务
  */
-@FeignClient("short-link-project")
+@FeignClient(value = "short-link-project", url = "${aggregation.remote-url:}") //聚合微服务不为空时使用聚合微服务地址
 public interface ShortLinkActualRemoteService {
     /**
      * 创建短链接
