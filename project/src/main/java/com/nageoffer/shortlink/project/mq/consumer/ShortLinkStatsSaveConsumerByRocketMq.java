@@ -94,8 +94,12 @@ public class ShortLinkStatsSaveConsumerByRocketMq implements RocketMQListener<Ma
                 actualSaveShortLinkStats(fullShortUrl, gid, statsRecord);
             }
         } catch (Throwable ex) {
-            // TODO 还需要删除消息吗
             log.error("记录短链接监控消费异常", ex);
+            try{
+                messageQueueIdempotentHandler.delMessageProcessed(keys);
+            }catch (Throwable deleteEx){
+                log.error("删除消息幂等标识异常，可能会导致消息重复消费，消息Keys：{}", keys, deleteEx);
+            }
             throw ex;
         }
         messageQueueIdempotentHandler.setAccomplish(keys);
